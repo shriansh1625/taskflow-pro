@@ -1,0 +1,36 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Same models as schema.prisma. Local clone, tests, and Docker stay on SQLite.
+// Vercel generates from this file so the live URL does not use a SQLite file.
+
+model Task {
+  id           String   @id
+  title        String
+  description  String   @default("")
+  column       String
+  sortOrder    Int
+  plannedStart String
+  durationDays Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  predecessors Dependency[] @relation("Successor")
+  successors   Dependency[] @relation("Predecessor")
+}
+
+model Dependency {
+  predecessorId String
+  successorId   String
+  predecessor   Task     @relation("Predecessor", fields: [predecessorId], references: [id], onDelete: Cascade)
+  successor     Task     @relation("Successor", fields: [successorId], references: [id], onDelete: Cascade)
+
+  @@id([predecessorId, successorId])
+}

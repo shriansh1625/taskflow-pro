@@ -149,4 +149,11 @@ describe("board store", () => {
     );
     expect(after.tasks).toHaveLength(8);
   });
+
+  it("reseeds an empty database so a fresh host is usable", async () => {
+    await prisma.dependency.deleteMany();
+    await prisma.task.deleteMany();
+    const board = await getBoard();
+    expect(board.tasks).toHaveLength(9);
+  });
 });

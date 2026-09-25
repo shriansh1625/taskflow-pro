@@ -49,13 +49,29 @@ Open `http://localhost:3000`. Health: `GET /api/health`.
 
 Optional: set `GROQ_API_KEY` in `.env` for live suggestions via Groq `openai/gpt-oss-120b` at temperature 0. Without a key, the same panel uses a labeled heuristic. The engine still filters cycles and unknown ids. Never commit `.env`.
 
+## Live URL (Vercel + Neon, $0)
+
+Local clone, `npm test`, and Docker stay on SQLite. The engine does not change. Vercel cannot keep a SQLite file, so production uses Neon Postgres with the same tables (`prisma/schema.postgres.prisma`). An empty database seeds itself on first read.
+
+1. Create a Neon project at [https://console.neon.tech](https://console.neon.tech) (Free, no card). Region close to `iad` or `sin`.
+2. Connect → copy the **direct** URI (hostname must **not** contain `-pooler`). It should look like `postgresql://...?sslmode=require`.
+3. Import [https://github.com/shriansh1625/taskflow-pro](https://github.com/shriansh1625/taskflow-pro) into Vercel (Hobby).
+4. Project → Settings → Environment Variables, for **Production and Preview**:
+   - `DATABASE_URL` = that direct Neon URI
+   - `GROQ_API_KEY` = your Groq key
+   - `GROQ_MODEL` = `openai/gpt-oss-120b`
+5. Deploy. First request creates tables and the 9-task diamond. Do not put `file:./dev.db` on Vercel.
+6. Open the `*.vercel.app` URL and run the walkthrough above. First click after Neon has slept can take a few seconds.
+
+If Suggest says `heuristic`, `GROQ_API_KEY` is missing on Vercel. If the page errors about the database, the URI is pooled or not set.
+
 ## What this does not do
 
-Do not deploy this SQLite build to Vercel serverless. The database file is local. For a live URL use a host with a disk (Docker image in `Dockerfile`, or run the commands above on a small VM).
+Do not point Vercel at `file:./dev.db`. That SQLite file does not exist on serverless. The live path is Neon Postgres, documented above. Local clone and Docker still use SQLite.
 
-This sprint is one board and one editor. There is no login. Do not put the process on a public URL without an auth layer in front of it.
+This sprint is one board and one editor. There is no login. The public demo is a single shared board. Anyone with the URL can reset it.
 
-The scheduling math does not depend on SQLite. `src/engine` is pure TypeScript. A later Postgres swap is a Prisma provider change, not a rewrite of cycle detection or diamond counting.
+The scheduling math does not depend on which database Prisma talks to. `src/engine` is pure TypeScript.
 
 ## API
 

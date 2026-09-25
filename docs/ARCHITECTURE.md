@@ -9,7 +9,8 @@ UI (Kanban, drawer, suggest, export)
 Next.js route handlers
         |
         v
-board-store  --transaction-->  SQLite
+board-store  --transaction-->  SQLite (local, tests, Docker)
+                            or Postgres (Vercel + Neon)
         |
         v
 engine.recompute / evaluateNewEdge / previewDependency
@@ -50,11 +51,11 @@ If the key is missing or Groq fails, a labeled heuristic uses the same filter. P
 
 ## Persistence
 
-Prisma over SQLite. Every successful mutation returns the full derived board. SQLite is the local demo store so a reviewer can run the repo without a hosted database. The engine does not know about Prisma. Swapping the provider later does not change cycle, diamond, or rollback math.
+Prisma over SQLite for clone, tests, and Docker. Production on Vercel uses the same models on Neon Postgres (`prisma/schema.postgres.prisma`). The engine does not know about Prisma. Cycle, diamond, and rollback math do not change with the provider. An empty store seeds the nine-task diamond on first read.
 
-CI on `main` runs `npm test` and `npm run typecheck`.
+CI on `main` runs `npm test` and `npm run typecheck` against SQLite.
 
-Do not deploy this SQLite file to Vercel serverless. Use a host with a disk (`Dockerfile`) or a small VM.
+Do not set `DATABASE_URL=file:./dev.db` on Vercel.
 
 ## Security boundary
 

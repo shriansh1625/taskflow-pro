@@ -1,0 +1,4 @@
+{
+  "buildCommand": "npx prisma generate --schema=prisma/schema.postgres.prisma && npx prisma db push --schema=prisma/schema.postgres.prisma --skip-generate && npx next build",
+  "framework": "nextjs"
+}

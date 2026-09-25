@@ -61,6 +61,12 @@ function derive(tasks: TaskInput[], edges: DependencyEdge[]): BoardPayload {
 }
 
 export async function getBoard(db: Db = prisma): Promise<BoardPayload> {
+  if (db === prisma) {
+    const count = await db.task.count();
+    if (count === 0) {
+      return resetBoard(prisma);
+    }
+  }
   const tasks = await loadTasks(db);
   const edges = await loadEdges(db);
   return derive(tasks, edges);
