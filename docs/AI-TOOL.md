@@ -8,7 +8,8 @@
 - Output: a JSON object `{ "proposals": [ { predecessorId, successorId, reason, confidence } ] }`.
 - Grounding: the prompt receives a closed catalog of stored task ids, titles, descriptions, columns, planned starts, durations, and existing edges. Derived dates are not sent. Titles are labeled untrusted data, not instructions.
 - Server filter: drop unknown ids, self-links, duplicates, existing edges, and anything the cycle checker would reject. Dropped rows are returned with a reason and shown in the panel.
-- Ranking: remaining proposals are ordered by days the engine would move, then whether the edge would bind, then confidence.
+- Ranking: remaining proposals are ordered by days the engine would move, then whether the edge would bind, then confidence. The panel lists the finishes that would move.
+- Human loop: Accept calls `POST /api/dependencies`. Dismiss writes nothing.
 - Human loop: Accept calls `POST /api/dependencies`. Dismiss writes nothing.
 - Fallback: if the key is missing, Groq times out, or JSON is unusable, a labeled heuristic still goes through the same filter and accept step. Browser-visible errors are sanitized; provider response bodies are not forwarded.
 - The Groq key stays in server environment variables (`.env`, gitignored) and is never sent to the browser.

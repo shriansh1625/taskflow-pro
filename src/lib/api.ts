@@ -117,6 +117,9 @@ export type RankedSuggestion = {
   source: "model" | "heuristic";
   totalDaysMoved: number;
   bindsSuccessor: boolean;
+  preview: {
+    shifts: { taskId: string; beforeFinish: string; afterFinish: string; deltaDays: number }[];
+  };
 };
 
 export type SuggestionReport = {

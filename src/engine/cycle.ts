@@ -1,15 +1,5 @@
+import { outgoingMap } from "./graph";
 import type { DependencyEdge, EdgeRejection } from "./types";
-
-function outgoingMap(edges: DependencyEdge[]): Map<string, string[]> {
-  const outgoing = new Map<string, string[]>();
-  for (const edge of edges) {
-    const next = outgoing.get(edge.predecessorId) ?? [];
-    next.push(edge.successorId);
-    outgoing.set(edge.predecessorId, next);
-  }
-  for (const next of outgoing.values()) next.sort();
-  return outgoing;
-}
 
 /** Shortest path from start to goal along predecessor -> successor edges. */
 export function pathFrom(

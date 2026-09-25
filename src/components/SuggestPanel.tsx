@@ -130,6 +130,18 @@ export function SuggestPanel({ open, board, onClose, onBoard, onToast }: Props) 
                     {" · conf "}
                     {item.confidence.toFixed(2)}
                   </p>
+                  {item.preview?.shifts?.length ? (
+                    <ul className="fine">
+                      {item.preview.shifts.slice(0, 4).map((shift) => (
+                        <li key={shift.taskId}>
+                          {titles.get(shift.taskId) ?? shift.taskId}: {shift.deltaDays > 0 ? "+" : ""}
+                          {shift.deltaDays}d
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="fine">No effective finishes would move.</p>
+                  )}
                   <div className="modal-actions">
                     <button type="button" className="ghost" onClick={() => dismiss(item)} disabled={busy}>
                       Dismiss

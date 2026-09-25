@@ -1,9 +1,9 @@
 import { previewNewDependency } from "@/server/board-store";
-import { jsonBoard, jsonError, jsonFail } from "@/server/http";
+import { jsonBoard, jsonError, jsonFail, readJson } from "@/server/http";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await readJson(request)) as { predecessorId?: unknown; successorId?: unknown };
     if (!body?.predecessorId || !body?.successorId) {
       return jsonFail("predecessorId and successorId are required.");
     }

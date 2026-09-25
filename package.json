@@ -2,12 +2,16 @@
   "name": "taskflow-pro",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "postinstall": "prisma generate"
@@ -22,14 +26,14 @@
     "@prisma/client": "^6.16.2",
     "next": "^15.5.2",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "tsx": "^4.20.5"
   },
   "devDependencies": {
     "@types/node": "^22.17.2",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
     "prisma": "^6.16.2",
-    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   }

@@ -4,6 +4,7 @@ import {
   buildCatalog,
   groundProposals,
   heuristicProposals,
+  parseModelJson,
   publicModelError,
   suggestionPrompt,
   type RawProposal,
@@ -114,5 +115,19 @@ describe("suggestion grounding", () => {
       "The model endpoint rejected the request.",
     );
     expect(publicModelError(new Error("GROQ_API_KEY is not set."))).toBe("GROQ_API_KEY is not set.");
+  });
+
+  it("parses fenced JSON and ignores surrounding text", () => {
+    const parsed = parseModelJson(
+      'Sure.\n```json\n{"proposals":[{"predecessorId":"schema","successorId":"ui-shell","reason":"schema first","confidence":0.7}]}\n```\n',
+    );
+    expect(parsed).toEqual([
+      {
+        predecessorId: "schema",
+        successorId: "ui-shell",
+        reason: "schema first",
+        confidence: 0.7,
+      },
+    ]);
   });
 });

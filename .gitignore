@@ -13,3 +13,4 @@ fill_synopsis.py
 *.xlsx
 Hackathon-Synopsis*
 .cursor/
+*.tsbuildinfo

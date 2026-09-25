@@ -52,6 +52,8 @@ If the key is missing or Groq fails, a labeled heuristic uses the same filter. P
 
 Prisma over SQLite. Every successful mutation returns the full derived board. SQLite is the local demo store so a reviewer can run the repo without a hosted database. The engine does not know about Prisma. Swapping the provider later does not change cycle, diamond, or rollback math.
 
+CI on `main` runs `npm test` and `npm run typecheck`.
+
 Do not deploy this SQLite file to Vercel serverless. Use a host with a disk (`Dockerfile`) or a small VM.
 
 ## Security boundary

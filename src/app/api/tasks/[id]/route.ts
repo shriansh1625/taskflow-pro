@@ -1,12 +1,17 @@
 import { deleteTask, updateTask } from "@/server/board-store";
-import { jsonBoard, jsonError } from "@/server/http";
+import { jsonBoard, jsonError, readJson } from "@/server/http";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { id } = await params;
-    const body = await request.json();
+    const body = (await readJson(request)) as {
+      title?: unknown;
+      description?: unknown;
+      plannedStart?: unknown;
+      durationDays?: unknown;
+    };
     return jsonBoard(
       await updateTask(id, {
         title: body.title !== undefined ? String(body.title) : undefined,
@@ -30,4 +35,3 @@ export async function DELETE(_request: Request, { params }: Params) {
     return jsonError(error);
   }
 }
-

@@ -1,6 +1,21 @@
 # TaskFlow Pro
 
+[![test](https://github.com/shriansh1625/taskflow-pro/actions/workflows/test.yml/badge.svg)](https://github.com/shriansh1625/taskflow-pro/actions/workflows/test.yml)
+
+Public repo: [https://github.com/shriansh1625/taskflow-pro](https://github.com/shriansh1625/taskflow-pro)
+
 A Kanban board whose order is a directed acyclic graph. The engine decides Ready and Blocked, rejects cycles, and moves downstream dates once when several paths carry the same upstream change.
+
+```
+Backlog              In progress         Done
+Integration tests    Backend API         Database schema
+Data migration       App shell           Auth model
+Auth endpoints
+API client
+Release checklist
+```
+
+The diamond is schema → API and schema → migration, both into integration tests. Extending schema by 3 days moves integration tests by 3, not 6.
 
 ## Judge walkthrough (2 minutes)
 
@@ -8,7 +23,7 @@ A Kanban board whose order is a directed acyclic graph. The engine decides Ready
 2. Click **Schema +3d**. Integration tests move by 3 days, not 6 (diamond). Clicking it again does not add another 3. The header **finish** date is the latest derived finish.
 3. Drag **Integration tests** into In progress. The move is refused; the card names Backend API and Data migration.
 4. Click **Regress schema**. Schema leaves Done. Downstream Done cards stay in Done and turn Blocked.
-5. Click **Suggest**. Proposals are ranked by days moved. Dropped rows show why the engine rejected them. Accept still runs the cycle checker. Dismiss writes nothing.
+5. Click **Suggest**. Proposals are ranked by days moved. Each row lists which finishes would move. Dropped rows show why the engine rejected them. Accept still runs the cycle checker. Dismiss writes nothing.
 6. Open Integration tests and try adding Database schema as a prerequisite. The cycle is named and not saved.
 7. Click **Export** for a JSON snapshot. The file states which fields are stored and which are derived.
 
@@ -16,12 +31,17 @@ A Kanban board whose order is a directed acyclic graph. The engine decides Ready
 
 ## Run locally
 
+Node 22. Do not copy a real Groq key into the repo.
+
 ```bash
+git clone https://github.com/shriansh1625/taskflow-pro.git
+cd taskflow-pro
 npm install
 cp .env.example .env
 npm run db:push
 npm run db:seed
 npm test
+npm run typecheck
 npm run dev
 ```
 
@@ -39,7 +59,7 @@ The scheduling math does not depend on SQLite. `src/engine` is pure TypeScript. 
 
 ## API
 
-Each successful write returns the full derived board.
+Each successful write returns the full derived board. Malformed JSON is `400`, not `500`.
 
 - `GET /api/board`
 - `GET /api/health`

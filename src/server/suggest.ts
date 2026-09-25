@@ -179,17 +179,34 @@ export function publicModelError(error: unknown): string {
   return "Model call failed.";
 }
 
-function parseModelJson(text: string): RawProposal[] {
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("Model did not return JSON.");
-  const parsed = JSON.parse(match[0]) as { proposals?: RawProposal[] };
-  if (!Array.isArray(parsed.proposals)) throw new Error("JSON was missing proposals.");
-  return parsed.proposals.slice(0, 12).map((item) => ({
-    predecessorId: String(item.predecessorId ?? ""),
-    successorId: String(item.successorId ?? ""),
-    reason: String(item.reason ?? ""),
-    confidence: Number(item.confidence ?? 0),
-  }));
+export function parseModelJson(text: string): RawProposal[] {
+  const trimmed = text.trim();
+  const candidates: string[] = [];
+  const fence = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) candidates.push(fence[1].trim());
+  candidates.push(trimmed);
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    candidates.push(trimmed.slice(start, end + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as { proposals?: RawProposal[] };
+      if (!Array.isArray(parsed.proposals)) continue;
+      return parsed.proposals.slice(0, 12).map((item) => ({
+        predecessorId: String(item.predecessorId ?? ""),
+        successorId: String(item.successorId ?? ""),
+        reason: String(item.reason ?? ""),
+        confidence: Number(item.confidence ?? 0),
+      }));
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error("Model did not return JSON.");
 }
 
 export async function fetchModelProposals(
