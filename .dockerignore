@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env
+.env.*
+dev.db
+*.db
+.vscode
+*.xlsx
+fill_synopsis.py
+Hackathon-Synopsis*

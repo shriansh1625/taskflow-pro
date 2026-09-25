@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+.env
+.env.local
+.env.*.local
+*.db
+*.db-journal
+.test-board.db
+fill_synopsis.py
+*.xlsx
+Hackathon-Synopsis*
+.cursor/

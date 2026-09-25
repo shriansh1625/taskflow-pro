@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Task {
+  id           String   @id
+  title        String
+  description  String   @default("")
+  column       String
+  sortOrder    Int
+  plannedStart String
+  durationDays Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  predecessors Dependency[] @relation("Successor")
+  successors   Dependency[] @relation("Predecessor")
+}
+
+model Dependency {
+  predecessorId String
+  successorId   String
+  predecessor   Task @relation("Predecessor", fields: [predecessorId], references: [id], onDelete: Cascade)
+  successor     Task @relation("Successor", fields: [successorId], references: [id], onDelete: Cascade)
+
+  @@id([predecessorId, successorId])
+}
