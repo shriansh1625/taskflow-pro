@@ -14,6 +14,8 @@ describe("explanations", () => {
     expect(text).toContain("Blocked");
     expect(text).toContain("derived");
     expect(text).not.toContain(integration.plannedStart + " was rewritten");
-    expect(explainCriticalPath(result.tasks)).toContain("Critical path");
+    const path = explainCriticalPath(result.tasks);
+    expect(path).toContain("Zero slack");
+    expect(path).not.toContain("→");
   });
 });

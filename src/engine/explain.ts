@@ -39,5 +39,5 @@ export function explainCriticalPath(tasks: DerivedTask[]): string {
     (latest, task) => (task.effectiveFinish > latest ? task.effectiveFinish : latest),
     chain[0].effectiveFinish,
   );
-  return `Critical path (${chain.length}): ${chain.map((task) => task.title).join(" → ")}. Latest finish on that path is ${finish}.`;
+  return `Zero slack (${chain.length}): ${chain.map((task) => task.title).join(", ")}. Latest of those finishes is ${finish}. Zero slack is not one dependency chain.`;
 }

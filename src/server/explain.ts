@@ -39,7 +39,7 @@ async function rewriteFacts(facts: string): Promise<string> {
           {
             role: "system",
             content:
-              "Rewrite the fact sheet as one short paragraph for a delivery lead. Use only facts in the sheet. Do not invent tasks, dates, or delays. No markdown.",
+              "Rewrite the fact sheet in at most three short sentences. Use only facts in the sheet. Do not join tasks with arrows. Do not invent a dependency chain. No markdown.",
           },
           { role: "user", content: facts },
         ],

@@ -338,19 +338,27 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
         {showCritical && criticalChain.length > 0 ? (
           <p className="cp-rail">
             <span>Critical path</span>
-            {criticalChain.map((task, index) => (
-              <span key={task.id}>
-                {index > 0 ? <em>→</em> : null}
-                <button type="button" onClick={() => setOpenId(task.id)}>{task.title}</button>
-              </span>
+            {criticalChain.map((task) => (
+              <button key={task.id} type="button" className="cp-chip" onClick={() => setOpenId(task.id)}>
+                {task.title}
+              </button>
             ))}
           </p>
         ) : null}
         {proof ? <p className="proof">{proof}</p> : null}
         {explanation ? (
-          <p className="proof proof-explain">
-            <strong>{explanation.source === "model" ? "Model" : "Engine"}.</strong> {explanation.text}
-          </p>
+          <div className="proof proof-explain">
+            <strong>{explanation.source === "model" ? "Model, from engine facts" : "Engine"}</strong>
+            <ul>
+              {explanation.text
+                .split(/(?<=\.)\s+/)
+                .filter((line) => line.trim().length > 0)
+                .slice(0, 4)
+                .map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+            </ul>
+          </div>
         ) : null}
       </div>
 
