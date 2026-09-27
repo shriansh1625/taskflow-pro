@@ -1,6 +1,10 @@
-import { getBoard } from "@/server/board-store";
+import { openBoard } from "@/server/board-store";
 import { jsonBoard, runRoute } from "@/server/http";
+import { boardContext } from "@/server/session";
 
 export function GET() {
-  return runRoute(async () => jsonBoard(await getBoard()));
+  return runRoute(async () => {
+    const { boardId, actorKey } = await boardContext();
+    return jsonBoard(await openBoard(boardId, actorKey));
+  });
 }

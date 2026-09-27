@@ -227,8 +227,11 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
 
   function exportSchedule() {
     const payload = {
-      note: "plannedStart and durationDays are stored. effective dates, readiness, slack, and critical path are derived and never written back.",
+      note: "plannedStart and durationDays are stored. effective dates, readiness, slack, and critical path are derived and never written back. This file is one browser's board.",
+      isolation: "per-browser",
       projectFinish: projectFinish || null,
+      plannedFinish: impact.plannedFinish,
+      slipDays: impact.slipDays,
       tasks: board.tasks,
       edges: board.edges,
     };
@@ -334,11 +337,22 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
 
       <div className="rail">
         <p className="legend">
+          {impact.slipDays === 0
+            ? `Derived finish matches the stored plan${impact.projectFinish ? ` (${formatDate(impact.projectFinish)})` : ""}.`
+            : `Dependencies push the finish ${impact.slipDays} day${impact.slipDays === 1 ? "" : "s"} past the latest stored plan${
+                impact.plannedFinish && impact.projectFinish
+                  ? ` (${formatDate(impact.plannedFinish)} to ${formatDate(impact.projectFinish)})`
+                  : ""
+              }. Counted once.`}
+          {" "}
           {impact.held} tasks are held by a predecessor. {impact.ownStart} still use their own planned start.
           {" "}
           {impact.blocked} blocked. {impact.zeroSlack} have zero slack.
           {" "}
           Stored dates are never rewritten when a slip moves a finish.
+        </p>
+        <p className="scope">
+          This browser has its own board. Reset cannot change another visitor&apos;s schedule. Write limits are stored in the database and follow this board onto a new server.
         </p>
         {showCritical && criticalChain.length > 0 ? (
           <p className="cp-rail">

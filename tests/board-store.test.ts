@@ -2,18 +2,20 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { PrismaClient } from "@prisma/client";
 import {
   addDependency,
   deleteTask,
   getBoard,
   moveTask,
+  NEW_BOARD_LIMIT,
+  openBoard,
   previewNewDependency,
   removeDependency,
   resetBoard,
   updateTask,
 } from "@/server/board-store";
 import { prisma } from "@/server/db";
+import { consumeLimit } from "@/server/limit";
 import { SEED_EDGES, SEED_TASKS } from "@/seed/board";
 
 const testDbPath = path.join(process.cwd(), ".test-board.db");
@@ -24,19 +26,6 @@ beforeAll(async () => {
     stdio: "pipe",
     env: { ...process.env, DATABASE_URL: `file:${testDbPath}` },
   });
-
-  const prisma = new PrismaClient({
-    datasources: { db: { url: `file:${testDbPath}` } },
-  });
-  await prisma.$transaction(async (tx) => {
-    for (const task of SEED_TASKS) {
-      await tx.task.create({ data: task });
-    }
-    for (const edge of SEED_EDGES) {
-      await tx.dependency.create({ data: edge });
-    }
-  });
-  await prisma.$disconnect();
 });
 
 afterAll(async () => {
@@ -179,7 +168,41 @@ describe("board store", () => {
   it("reseeds an empty database so a fresh host is usable", async () => {
     await prisma.dependency.deleteMany();
     await prisma.task.deleteMany();
-    const board = await getBoard();
+    const board = await openBoard("local", "fresh-host");
     expect(board.tasks).toHaveLength(9);
+  });
+
+  it("keeps one browser's reset off another browser's board", async () => {
+    await resetBoard("alpha");
+    await resetBoard("beta");
+    await updateTask("schema", { durationDays: 9 }, "alpha");
+    const beta = await getBoard("beta");
+    expect(beta.tasks.find((task) => task.id === "schema")?.durationDays).toBe(4);
+    await resetBoard("alpha");
+    const betaAfter = await getBoard("beta");
+    expect(betaAfter.tasks.find((task) => task.id === "schema")?.durationDays).toBe(4);
+    expect(betaAfter.tasks).toHaveLength(9);
+  });
+
+  it("stores write limits in the database and caps new boards per network", async () => {
+    expect(await consumeLimit("board-a", "mutate", 2)).toBe(true);
+    expect(await consumeLimit("board-a", "mutate", 2)).toBe(true);
+    expect(await consumeLimit("board-a", "mutate", 2)).toBe(false);
+    expect(await consumeLimit("board-b", "mutate", 2)).toBe(true);
+    await prisma.rateBucket.update({
+      where: { id: "board-a:mutate" },
+      data: { windowStart: new Date(Date.now() - 120_000) },
+    });
+    expect(await consumeLimit("board-a", "mutate", 2)).toBe(true);
+
+    const actor = "same-network";
+    for (let i = 0; i < NEW_BOARD_LIMIT; i += 1) {
+      expect(await consumeLimit(`actor:${actor}`, "create-board", NEW_BOARD_LIMIT)).toBe(true);
+    }
+    await expect(openBoard("capped-board", actor)).rejects.toMatchObject({
+      status: 429,
+      code: "RATE_LIMIT",
+    });
+    expect(await prisma.task.count({ where: { boardId: "capped-board" } })).toBe(0);
   });
 });

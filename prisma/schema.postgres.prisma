@@ -10,6 +10,8 @@ datasource db {
 
 model Task {
   id           String   @id
+  boardId      String   @default("shared")
+  logicalId    String   @default("")
   title        String
   description  String   @default("")
   column       String
@@ -21,13 +23,24 @@ model Task {
 
   predecessors Dependency[] @relation("Successor")
   successors   Dependency[] @relation("Predecessor")
+
+  @@index([boardId])
 }
 
 model Dependency {
   predecessorId String
   successorId   String
-  predecessor   Task @relation("Predecessor", fields: [predecessorId], references: [id], onDelete: Cascade)
-  successor     Task @relation("Successor", fields: [successorId], references: [id], onDelete: Cascade)
+  boardId       String   @default("shared")
+  predecessor   Task     @relation("Predecessor", fields: [predecessorId], references: [id], onDelete: Cascade)
+  successor     Task     @relation("Successor", fields: [successorId], references: [id], onDelete: Cascade)
 
   @@id([predecessorId, successorId])
+  @@index([boardId])
+}
+
+/// Fixed window shared by every server that uses this database.
+model RateBucket {
+  id          String   @id
+  windowStart DateTime
+  count       Int
 }

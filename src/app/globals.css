@@ -133,6 +133,13 @@ button.text-btn { border: 0; background: none; padding: 0; text-decoration: unde
 
 .legend { color: var(--muted); }
 
+.scope {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
 .cp-rail {
   display: flex;
   flex-wrap: wrap;

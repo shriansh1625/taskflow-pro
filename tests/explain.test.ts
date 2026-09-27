@@ -20,7 +20,18 @@ describe("explanations", () => {
     const impact = deliveryImpact(result.tasks);
     expect(impact.blocked).toBeGreaterThan(0);
     expect(impact.held + impact.ownStart).toBe(result.tasks.length);
-    expect(impact.projectFinish).toBeTruthy();
+    expect(impact.plannedFinish).toBe("2026-09-07");
+    expect(impact.projectFinish).toBe("2026-09-13");
+    expect(impact.slipDays).toBe(6);
+    const slipped = recompute(
+      SEED_TASKS.map((task) =>
+        task.id === "schema" ? { ...task, durationDays: task.durationDays + 3 } : task,
+      ),
+      SEED_EDGES,
+    );
+    expect(slipped.ok).toBe(true);
+    if (!slipped.ok) return;
+    expect(deliveryImpact(slipped.tasks).slipDays).toBe(8);
   });
 
   it("rejects a rewrite that invents a chain or a date", () => {

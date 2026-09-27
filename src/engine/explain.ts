@@ -1,3 +1,4 @@
+import { addDays, diffDays } from "./dates";
 import type { DerivedTask } from "./types";
 
 function nameOf(id: string, titles: Map<string, string>): string {
@@ -62,16 +63,26 @@ export function deliveryImpact(tasks: DerivedTask[]): {
   ownStart: number;
   zeroSlack: number;
   projectFinish: string | null;
+  plannedFinish: string | null;
+  slipDays: number;
 } {
   const projectFinish = tasks.reduce<string | null>(
     (latest, task) => (latest === null || task.effectiveFinish > latest ? task.effectiveFinish : latest),
     null,
   );
+  const plannedFinish = tasks.reduce<string | null>((latest, task) => {
+    const finish = addDays(task.plannedStart, task.durationDays);
+    return latest === null || finish > latest ? finish : latest;
+  }, null);
+  const slipDays =
+    projectFinish && plannedFinish ? Math.max(0, diffDays(projectFinish, plannedFinish)) : 0;
   return {
     blocked: tasks.filter((task) => task.readiness === "BLOCKED").length,
     held: tasks.filter((task) => task.bindingPredecessorId !== null).length,
     ownStart: tasks.filter((task) => task.bindingPredecessorId === null).length,
     zeroSlack: tasks.filter((task) => task.onCriticalPath).length,
     projectFinish,
+    plannedFinish,
+    slipDays,
   };
 }

@@ -58,7 +58,11 @@ If the key is missing or Groq fails, a labeled heuristic uses the same filter. P
 
 ## Persistence
 
-`prisma/schema.prisma` is the only model definition. `prisma/schema.postgres.prisma` is that file with the provider set to PostgreSQL and a Vercel binary target. `postgresSchemaFromSqlite` produces it, and the architecture test rejects a hand-edited drift. Local clone, tests, and Docker use SQLite. Vercel generates the Postgres client and talks to Neon. The engine does not know which one is connected. An empty store seeds the nine-task diamond on first read.
+`prisma/schema.prisma` is the only model definition. `prisma/schema.postgres.prisma` is that file with the provider set to PostgreSQL and a Vercel binary target. `postgresSchemaFromSqlite` produces it, and the architecture test rejects a hand-edited drift. Local clone, tests, and Docker use SQLite. Vercel generates the Postgres client and talks to Neon. The engine does not know which one is connected.
+
+A task row is keyed by `boardId` plus its logical id. The first request from a browser sets an httpOnly cookie and seeds only that board. Reset deletes that board's rows. Another browser's cookie addresses different rows, so a public URL can host many judges without one reset wiping the others. An empty board is created only after a per-network limit stored in `RateBucket`.
+
+Write, reset, suggestion, and explanation limits are fixed one-minute windows in that same table. Every Vercel instance reads the row for that board. A cold start does not zero the count.
 
 Suggestions receive `storedTasks`, which strips effective dates before the catalog is built. Explanations may read derived fields. Neither path writes them back.
 
@@ -69,6 +73,7 @@ Do not set `DATABASE_URL=file:./dev.db` on Vercel.
 ## Security boundary
 
 - `GROQ_API_KEY` is server-only. It is never shipped to the client bundle.
-- Suggestion and reset routes are rate-limited in process.
-- There is no login in this sprint (one editor). Treat the process as a local demo, not a public multi-tenant app.
-- `GET /api/health` reports task counts and whether suggestions would use the model. It does not echo secrets.
+- The board id lives in an httpOnly, SameSite cookie. Middleware copies it onto the request. Handlers do not trust a client-supplied board id.
+- Rate limits are rows in `RateBucket`, scoped to the board (and, for brand-new boards, to a hash of the network address). They are not an in-memory map.
+- There is no user account. Possession of the cookie is the editor capability for that board.
+- `GET /api/health` reports how many boards exist and whether suggestions would use the model. It does not return task rows or secrets.

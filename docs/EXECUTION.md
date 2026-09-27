@@ -4,7 +4,7 @@ Build window: 25 Sep 2026 08:00 to 28 Sep 2026 08:00. Code for this product is w
 
 ## Locked rules
 
-- One board, one editor.
+- One editor per board. Each browser holds its own board.
 - Calendar days in UTC. Duration is a positive integer. No working-day calendar and no lag on an edge.
 - Done counts only when that card is not Blocked.
 - Cycle check and insert share one transaction.
@@ -26,9 +26,11 @@ These live in `tests/engine.test.ts` and `tests/board-store.test.ts` and must st
 - Seed has 9 tasks, including the schema / API / migration / integration diamond.
 - Invalid duration and impossible calendar dates are rejected before write.
 - Planned start is not rewritten when downstream dates move.
+- Resetting one board leaves another board's schema duration unchanged.
+- A write limit is a database row. A second board is not blocked by the first board's count.
 
 ## Remaining outside this repo
 
 - Public GitHub (required to submit).
-- Live URL, if a disk host is available. Not Vercel serverless.
+- Live URL on Vercel, with Neon as the database. Each browser has its own board. Rate limits are rows in that database.
 - Portal AI-Tool declaration tick, pointing at `docs/AI-TOOL.md`.

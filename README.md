@@ -17,14 +17,14 @@ API client
 Release checklist
 ```
 
-The diamond is schema → API and schema → migration, both into integration tests. Extending schema by 3 days moves integration tests by 3, not 6. The board counts how many tasks are held by a predecessor, how many are blocked, and how many have zero slack. Those numbers are derived. A slip does not rewrite the stored planned start.
+The diamond is schema → API and schema → migration, both into integration tests. Extending schema by 3 days moves integration tests by 3, not 6. The board states how many days the derived finish sits past the stored plan, how many tasks are held by a predecessor, and how many have zero slack. Those numbers are derived. A slip does not rewrite the stored planned start.
 
-Writes are rate-limited. Reset asks before it replaces the shared board. Why finish shows engine facts, or a model rewrite that was checked for invented dates and arrows.
+Each browser gets its own board. Reset stays in that browser. Write limits are rows in the database, so a new server keeps the same count.
 
 ## Judge walkthrough (2 minutes)
 
 1. Click **Reset** so you are on the 9 seeded tasks.
-2. Click **Schema +3d**. Integration tests move by 3 days, not 6 (diamond). Clicking it again does not add another 3. The header **finish** date is the latest derived finish.
+2. Click **Schema +3d**. Integration tests move by 3 days, not 6 (diamond). The header **finish** moves by those same 3 days, once. The line under the header is how far that finish sits past the stored plan. Clicking the button again does not add another 3.
 3. Drag **Integration tests** into In progress. The move is refused; the card names Backend API and Data migration.
 4. Click **Regress schema**. Schema leaves Done. Backend API stays In progress and turns Blocked. Columns are not dragged backward.
 5. Click **Suggest**. Proposals are ranked by days moved. Each row lists which finishes would move. Dropped rows show why the engine rejected them. Accept still runs the cycle checker. Dismiss writes nothing.
@@ -74,7 +74,7 @@ If Suggest says `heuristic`, `GROQ_API_KEY` is missing on Vercel. If the page er
 
 Do not point Vercel at `file:./dev.db`. That SQLite file does not exist on serverless. The live path is Neon Postgres, documented above. Local clone and Docker still use SQLite.
 
-This sprint is one board and one editor. There is no login. The public demo is a single shared board. Anyone with the URL can reset it.
+This sprint gives each browser its own board and one editor for that board. There is no shared login. The cookie that identifies the board is httpOnly, so page scripts cannot read it, and a reset in one browser cannot see another browser's rows.
 
 The scheduling math does not depend on which database Prisma talks to. `src/engine` is pure TypeScript.
 
@@ -97,7 +97,7 @@ Each successful write returns the full derived board. Malformed JSON is `400`, n
 
 ## Key assumptions
 
-- One board and one editor in this sprint.
+- One editor per board. Each browser holds its own board.
 - A predecessor is satisfied only when it is in Done and not Blocked.
 - Duration is a positive whole number of calendar days. There is no working-day calendar.
 - Planned start and duration are the only stored dates. Effective dates are computed on read.
@@ -105,7 +105,7 @@ Each successful write returns the full derived board. Malformed JSON is `400`, n
 
 ## Limitations
 
-- Working-day calendars, lags on individual edges, live multi-user editing, and multiple boards are out of scope.
+- Working-day calendars, lags on individual edges, and live multi-user editing of the same board are out of scope. Separate browsers do not share a board.
 - Critical path is a zero-slack highlight, not a separate Gantt.
 - Live multi-region deploy is out of scope; SQLite is the local store.
 
