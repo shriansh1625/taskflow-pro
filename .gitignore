@@ -15,3 +15,5 @@ Hackathon-Synopsis*
 .cursor/
 *.tsbuildinfo
 .vercel
+.neon/
+.neon

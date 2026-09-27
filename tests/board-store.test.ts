@@ -141,6 +141,32 @@ describe("board store", () => {
     );
   });
 
+  it("runs the judge walkthrough without compounding the diamond", async () => {
+    const seeded = await resetBoard();
+    const beforeFinish = seeded.tasks.find((task) => task.id === "integration")!.effectiveFinish;
+    const slipped = await updateTask("schema", { durationDays: 7 });
+    const afterFinish = slipped.tasks.find((task) => task.id === "integration")!.effectiveFinish;
+    expect(Date.parse(`${afterFinish}T00:00:00Z`) - Date.parse(`${beforeFinish}T00:00:00Z`)).toBe(
+      3 * 86_400_000,
+    );
+    const again = await updateTask("schema", { durationDays: 7 });
+    expect(again.tasks.find((task) => task.id === "integration")!.effectiveFinish).toBe(afterFinish);
+    expect(again.tasks.find((task) => task.id === "schema")!.plannedStart).toBe("2026-09-01");
+
+    await expect(moveTask("integration", "IN_PROGRESS", 0)).rejects.toMatchObject({ code: "BLOCKED" });
+
+    const regressed = await moveTask("schema", "IN_PROGRESS", 0);
+    expect(regressed.tasks.find((task) => task.id === "schema")!.column).toBe("IN_PROGRESS");
+    expect(regressed.tasks.find((task) => task.id === "api")).toMatchObject({
+      column: "IN_PROGRESS",
+      readiness: "BLOCKED",
+    });
+
+    const preview = await previewNewDependency("integration", "schema");
+    expect(preview.ok).toBe(false);
+    if (!preview.ok) expect(preview.code).toBe("CYCLE");
+  });
+
   it("deletes a task and its edges then recomputes", async () => {
     const after = await deleteTask("release");
     expect(after.tasks.find((task) => task.id === "release")).toBeUndefined();

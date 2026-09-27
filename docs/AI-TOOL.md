@@ -2,7 +2,8 @@
 
 ## In the product
 
-- Feature: dependency suggestion only. The model does not set dates, columns, or readiness.
+- Feature: dependency suggestion, plus a one-paragraph explanation of a derived finish. The model does not set dates, columns, or readiness.
+- Explanation: the server builds a fact sheet from the engine (binding predecessor, readiness, slack, critical path). Groq may only rewrite that sheet. If the call fails, the fact sheet is shown and labeled engine.
 - Provider: Groq OpenAI-compatible chat API.
 - Model: `openai/gpt-oss-120b` at temperature 0.
 - Output: a JSON object `{ "proposals": [ { predecessorId, successorId, reason, confidence } ] }`.

@@ -129,6 +129,22 @@ export type SuggestionReport = {
   modelError: string | null;
 };
 
+export type Explanation = {
+  source: "model" | "engine";
+  text: string;
+  note: string | null;
+};
+
+export async function requestExplanation(taskId?: string): Promise<Explanation> {
+  return parse(
+    await fetch("/api/explain", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(taskId ? { taskId } : {}),
+    }),
+  );
+}
+
 export async function requestSuggestions(): Promise<SuggestionReport> {
   return parse(
     await fetch("/api/suggestions", {

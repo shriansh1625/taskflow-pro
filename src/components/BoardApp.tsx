@@ -15,8 +15,8 @@ import {
   type DropAnimation,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { COLUMNS, moveDecision, type BoardPayload, type Column, type DerivedTask } from "@/engine";
-import { moveTaskRequest, patchTask, resetBoardRequest, type ApiError } from "@/lib/api";
+import { COLUMNS, diffDays, moveDecision, type BoardPayload, type Column, type DerivedTask } from "@/engine";
+import { moveTaskRequest, patchTask, requestExplanation, resetBoardRequest, type ApiError, type Explanation } from "@/lib/api";
 import { COLUMN_COPY, formatDate } from "@/lib/copy";
 import { SEED_TASKS } from "@/seed/board";
 import { CreateTaskModal } from "./CreateTaskModal";
@@ -97,6 +97,10 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
   const [showCritical, setShowCritical] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [proof, setProof] = useState<string | null>(null);
+  const [step, setStep] = useState(0);
+  const [explanation, setExplanation] = useState<Explanation | null>(null);
+  const [explaining, setExplaining] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -114,6 +118,17 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
   const projectFinish = board.tasks.reduce(
     (latest, task) => (task.effectiveFinish > latest ? task.effectiveFinish : latest),
     "",
+  );
+  const criticalChain = useMemo(
+    () =>
+      board.tasks
+        .filter((task) => task.onCriticalPath)
+        .sort(
+          (left, right) =>
+            left.effectiveFinish.localeCompare(right.effectiveFinish) ||
+            left.title.localeCompare(right.title),
+        ),
+    [board.tasks],
   );
 
   function toast(text: string, kind: "ok" | "err" = "ok") {
@@ -152,6 +167,7 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
     if (!current) return;
     const blocked = moveDecision(current, dest.column, titleById);
     if (!blocked.ok) {
+      if (id === "integration" && dest.column === "IN_PROGRESS") setStep(3);
       toast(blocked.message, "err");
       return;
     }
@@ -167,8 +183,16 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
   async function regressSchema() {
     const snapshot = board;
     try {
-      applyBoard(await moveTaskRequest("schema", "IN_PROGRESS", 0));
-      toast("Schema left Done. Downstream Done cards should stay in Done and turn Blocked.");
+      const next = await moveTaskRequest("schema", "IN_PROGRESS", 0);
+      applyBoard(next);
+      const api = next.tasks.find((task) => task.id === "api");
+      setStep(4);
+      setProof(
+        api?.column === "IN_PROGRESS" && api.readiness === "BLOCKED"
+          ? "Rollback: Database schema left Done. Backend API stayed In progress and turned Blocked. Columns were not dragged backward."
+          : "Rollback applied. Downstream cards keep their column and recompute readiness.",
+      );
+      toast("Schema left Done. Downstream cards keep their column and recompute readiness.");
     } catch (error) {
       applyBoard(snapshot);
       toast((error as ApiError).error ?? "Rollback demo failed.", "err");
@@ -176,11 +200,27 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
   }
 
   async function resetDemo() {
+    if (!window.confirm("Restore the 9 seeded tasks on this shared board?")) return;
     try {
       applyBoard(await resetBoardRequest());
+      setProof(null);
+      setExplanation(null);
+      setStep(1);
       toast("Board restored to the 9 seeded tasks.");
     } catch (error) {
       toast((error as ApiError).error ?? "Reset failed.", "err");
+    }
+  }
+
+  async function explainFinish() {
+    setExplaining(true);
+    setStep(5);
+    try {
+      setExplanation(await requestExplanation("integration"));
+    } catch (error) {
+      toast((error as ApiError).error ?? "Explanation failed.", "err");
+    } finally {
+      setExplaining(false);
     }
   }
 
@@ -213,9 +253,16 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
       const seeded = SEED_TASKS.find((task) => task.id === "schema")!.durationDays;
       const next = await patchTask("schema", { durationDays: seeded + 3 });
       applyBoard(next);
-      const after = next.tasks.find((task) => task.id === "integration")?.effectiveFinish;
+      const after = next.tasks.find((task) => task.id === "integration")?.effectiveFinish ?? before;
+      const moved = diffDays(after, before);
+      setStep(2);
+      setProof(
+        moved === 0
+          ? "Diamond already applied. Integration tests did not move again, so the +3 did not compound."
+          : `Diamond: Integration tests moved ${moved} day${moved === 1 ? "" : "s"} (${formatDate(before)} → ${formatDate(after)}), not ${moved * 2}. Planned start was not rewritten.`,
+      );
       toast(
-        `Schema +3 days. Integration tests moved from ${formatDate(before)} to ${formatDate(after ?? before)} — once, not twice.`,
+        `Schema +3 days. Integration tests moved from ${formatDate(before)} to ${formatDate(after)} — once, not twice.`,
       );
     } catch (error) {
       toast((error as ApiError).error ?? "Diamond demo failed.", "err");
@@ -269,8 +316,11 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
           <button type="button" className="ghost" onClick={regressSchema}>
             Regress schema
           </button>
-          <button type="button" className="ghost" onClick={() => setSuggesting(true)}>
+          <button type="button" className="ghost" onClick={() => { setSuggesting(true); setStep(5); }}>
             Suggest
+          </button>
+          <button type="button" className="ghost" onClick={explainFinish} disabled={explaining}>
+            {explaining ? "Explaining…" : "Why finish"}
           </button>
           <button type="button" className="ghost" onClick={runDiamond}>
             Schema +3d
@@ -280,6 +330,29 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
           </button>
         </div>
       </header>
+
+      <div className="rail">
+        <p className="legend">
+          Stored: planned start and duration. Derived on every read: finish, blocked, slack, critical path.
+        </p>
+        {showCritical && criticalChain.length > 0 ? (
+          <p className="cp-rail">
+            <span>Critical path</span>
+            {criticalChain.map((task, index) => (
+              <span key={task.id}>
+                {index > 0 ? <em>→</em> : null}
+                <button type="button" onClick={() => setOpenId(task.id)}>{task.title}</button>
+              </span>
+            ))}
+          </p>
+        ) : null}
+        {proof ? <p className="proof">{proof}</p> : null}
+        {explanation ? (
+          <p className="proof proof-explain">
+            <strong>{explanation.source === "model" ? "Model" : "Engine"}.</strong> {explanation.text}
+          </p>
+        ) : null}
+      </div>
 
       {board.tasks.length === 0 ? (
         <div className="empty-board">
@@ -321,11 +394,17 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
       )}
 
       <ol className="walkthrough">
-        <li><b>1</b> Reset if the board looks dirty</li>
-        <li><b>2</b> Schema +3d — Integration tests move once, not twice</li>
-        <li><b>3</b> Drag Integration tests into In progress — refused</li>
-        <li><b>4</b> Regress schema — later Done cards stay Done and turn Blocked</li>
-        <li><b>5</b> Suggest — ranked by days moved; Accept still runs the cycle check</li>
+        {[
+          "Reset if the board looks dirty",
+          "Schema +3d — Integration tests move once, not twice",
+          "Drag Integration tests into In progress — refused",
+          "Regress schema — later cards keep their column and turn Blocked",
+          "Suggest or Why finish — the model cannot write a date",
+        ].map((label, index) => (
+          <li key={label} className={step === index + 1 ? "is-current" : ""}>
+            <b>{index + 1}</b> {label}
+          </li>
+        ))}
       </ol>
 
       {openTask ? (

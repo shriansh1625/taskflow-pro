@@ -1,5 +1,7 @@
 # TaskFlow Pro
 
+Live demo: [https://taskflow-pro-mauve-one.vercel.app/](https://taskflow-pro-mauve-one.vercel.app/)
+
 [![test](https://github.com/shriansh1625/taskflow-pro/actions/workflows/test.yml/badge.svg)](https://github.com/shriansh1625/taskflow-pro/actions/workflows/test.yml)
 
 Public repo: [https://github.com/shriansh1625/taskflow-pro](https://github.com/shriansh1625/taskflow-pro)
@@ -22,10 +24,11 @@ The diamond is schema → API and schema → migration, both into integration te
 1. Click **Reset** so you are on the 9 seeded tasks.
 2. Click **Schema +3d**. Integration tests move by 3 days, not 6 (diamond). Clicking it again does not add another 3. The header **finish** date is the latest derived finish.
 3. Drag **Integration tests** into In progress. The move is refused; the card names Backend API and Data migration.
-4. Click **Regress schema**. Schema leaves Done. Downstream Done cards stay in Done and turn Blocked.
+4. Click **Regress schema**. Schema leaves Done. Backend API stays In progress and turns Blocked. Columns are not dragged backward.
 5. Click **Suggest**. Proposals are ranked by days moved. Each row lists which finishes would move. Dropped rows show why the engine rejected them. Accept still runs the cycle checker. Dismiss writes nothing.
-6. Open Integration tests and try adding Database schema as a prerequisite. The cycle is named and not saved.
-7. Click **Export** for a JSON snapshot. The file states which fields are stored and which are derived.
+6. Click **Why finish**. The paragraph is a rewrite of engine facts (binding predecessor, blocked list, slack). If Groq is down, the same facts are shown and labeled engine. The model cannot change a date.
+7. Open Integration tests and try adding Database schema as a prerequisite. The cycle is named and not saved.
+8. Click **Export** for a JSON snapshot. The file states which fields are stored and which are derived.
 
 `docs/AI-TOOL.md` is the AI-Tool Declaration.
 
@@ -88,6 +91,7 @@ Each successful write returns the full derived board. Malformed JSON is `400`, n
 - `DELETE /api/dependencies`
 - `POST /api/dependencies/preview`
 - `POST /api/suggestions`
+- `POST /api/explain`
 
 ## Key assumptions
 

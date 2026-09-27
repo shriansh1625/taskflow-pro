@@ -116,11 +116,67 @@ button.text-btn { border: 0; background: none; padding: 0; text-decoration: unde
   font-size: 13px;
 }
 
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #efe6d6;
+  border-bottom: 2px solid var(--line);
+}
+
+.legend, .cp-rail, .proof {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.legend { color: var(--muted); }
+
+.cp-rail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+}
+
+.cp-rail > span:first-child {
+  color: var(--crit);
+  font-weight: 500;
+  margin-right: 4px;
+}
+
+.cp-rail button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cp-rail em {
+  font-style: normal;
+  color: var(--muted);
+  margin: 0 4px;
+}
+
+.proof {
+  border-left: 4px solid var(--crit);
+  padding: 6px 10px;
+  background: var(--paper);
+}
+
+.proof-explain { border-left-color: var(--ready); }
+.proof strong { font-weight: 600; margin-right: 6px; }
+
 .board {
   display: flex;
   flex: 1;
   overflow-x: auto;
-  min-height: calc(100vh - 96px);
+  min-height: calc(100vh - 180px);
 }
 
 .column {
@@ -434,6 +490,11 @@ input:focus, textarea:focus, select:focus, button:focus-visible {
 }
 
 .walkthrough li { white-space: nowrap; color: var(--muted); }
+.walkthrough li.is-current {
+  color: var(--ink);
+  background: #f3e2b0;
+  padding: 2px 6px;
+}
 .walkthrough b { color: var(--ink); font-weight: 500; }
 
 code { font-family: var(--font-mono), monospace; }
