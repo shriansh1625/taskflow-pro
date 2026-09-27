@@ -34,10 +34,37 @@ describe("explanations", () => {
     expect(deliveryImpact(slipped.tasks).slipDays).toBe(8);
   });
 
-  it("rejects a rewrite that invents a chain or a date", () => {
-    const facts = "Integration tests finishes 2026-09-12. It is Blocked by Backend API. Zero slack is not one dependency chain.";
-    expect(acceptRewrite(facts, "Integration tests finishes 2026-09-12. It is Blocked by Backend API.")).toBe(true);
-    expect(acceptRewrite(facts, "Schema → API → Integration tests finishes 2026-09-12.")).toBe(false);
-    expect(acceptRewrite(facts, "Integration tests finishes 2026-10-01. It is Blocked by Backend API.")).toBe(false);
+  it("rejects a rewrite that invents a chain, a date, or a merged held-by", () => {
+    const facts =
+      "Integration tests finishes 2026-09-12. It is held by Backend API. It is Blocked by Backend API, Data migration. Zero slack is not one dependency chain.";
+    const faithful =
+      "Integration tests finishes 2026-09-12. It is held by Backend API. It is Blocked by Backend API, Data migration.";
+    expect(acceptRewrite(facts, faithful)).toBe(true);
+    expect(acceptRewrite(facts, "Schema → API → Integration tests finishes 2026-09-12. It is held by Backend API. It is Blocked by Backend API.")).toBe(false);
+    expect(acceptRewrite(facts, "Integration tests finishes 2026-10-01. It is held by Backend API. It is Blocked by Backend API, Data migration.")).toBe(false);
+    expect(
+      acceptRewrite(
+        facts,
+        "Integration tests finishes 2026\u201109\u201110. It is held by Backend API. It is Blocked by Backend API, Data migration.",
+      ),
+    ).toBe(false);
+    expect(
+      acceptRewrite(
+        facts,
+        "Integration tests finishes 2026\u201109\u201112. It is held by Backend API. It is Blocked by Backend API and Data migration.",
+      ),
+    ).toBe(true);
+    expect(
+      acceptRewrite(
+        facts,
+        "Integration tests finishes 2026-09-12. It is held and blocked by Backend API and also blocked by Data migration.",
+      ),
+    ).toBe(false);
+    expect(
+      acceptRewrite(
+        facts,
+        "Integration tests finishes 2026-09-12. It is held by Data migration. It is Blocked by Backend API, Data migration.",
+      ),
+    ).toBe(false);
   });
 });

@@ -370,7 +370,8 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
         {proof ? <p className="proof">{proof}</p> : null}
         {explanation ? (
           <div className="proof proof-explain">
-            <strong>{explanation.source === "model" ? "Model, from engine facts" : "Engine"}</strong>
+            <strong>{explanation.source === "model" ? "Model, checked against the engine" : "Engine"}</strong>
+            {explanation.note ? <p className="fine">{explanation.note}</p> : null}
             <ul>
               {explanation.text
                 .split(/(?<=\.)\s+/)

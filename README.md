@@ -32,7 +32,7 @@ These are the behaviors on the [live board](https://taskflow-pro-mauve-one.verce
 | Cost of the order | On the seed, dependencies push the finish 6 days past the latest stored plan (7 Sept to 13 Sept). That gap is counted once. |
 | Critical path | Tasks with zero slack are chips in the header. They are a set. They are not drawn as one dependency chain. |
 | Suggestions | **Suggest** ranks proposals by days the engine would move, then by whether the edge would bind. **Accept** uses the same cycle check as a manual add. **Dismiss** writes nothing. |
-| Finish explanation | **Why finish** may show a Groq rewrite of engine facts. A rewrite that invents a date or joins tasks with an arrow is thrown away, and the fact sheet is shown instead. |
+| Finish explanation | **Why finish** asks for three sentences: the derived finish, who it is held by, and who it is blocked by. A rewrite is kept only when every date matches the engine, including dates typed with a different hyphen, and the held-by name is not merged into the blocked list. Otherwise the engine fact sheet is shown. |
 | Separate boards | Each browser gets its own rows. **Reset** cannot change another visitor's schedule. The board id is an httpOnly cookie. |
 | Limits that survive a new server | Writes, resets, suggestions, and explanations are counted in Postgres, per board. `GET /api/health` reports `rateLimits: "database"` and `isolation: "per-browser"`. |
 | Tests | `npm test` covers the rows above. GitHub Actions runs the tests and `npm run typecheck` on `main`. |

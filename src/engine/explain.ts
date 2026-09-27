@@ -44,15 +44,55 @@ export function explainCriticalPath(tasks: DerivedTask[]): string {
 }
 
 const ISO_DATE = /\d{4}-\d{2}-\d{2}/g;
+const FANCY_DASH = /[\u2010\u2011\u2012\u2013\u2014\u2212\uFE58\uFF0D]/g;
 
-/** A rewrite may only restate the fact sheet. Arrows and new dates are rejected. */
+/** Turn unicode dashes into the hyphen the date check understands. */
+export function normalizeForCheck(text: string): string {
+  return text.replace(FANCY_DASH, "-").replace(/\u00a0/g, " ").trim();
+}
+
+function phraseAfter(text: string, label: string): string | null {
+  const match = text.match(new RegExp(`${label}\\s+([^.?!]+)`, "i"));
+  if (!match) return null;
+  return match[1].replace(/\s+/g, " ").trim().toLowerCase();
+}
+
+function nameList(phrase: string | null): string[] {
+  if (!phrase) return [];
+  return phrase
+    .replace(/\band\b/gi, ",")
+    .split(",")
+    .map((part) => part.replace(/[^a-z0-9 ]/gi, "").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+}
+
+/**
+ * A rewrite may only restate the fact sheet.
+ * Held-by (the date) and blocked-by (readiness) must stay the engine's names.
+ * A date is checked after unicode dashes are folded into ASCII hyphens.
+ */
 export function acceptRewrite(facts: string, text: string): boolean {
-  const cleaned = text.trim();
+  const cleaned = normalizeForCheck(text);
+  const sheet = normalizeForCheck(facts);
   if (cleaned.length < 40 || cleaned.length > 480) return false;
-  if (/→|->|=>|```/.test(cleaned)) return false;
-  const allowed = new Set(facts.match(ISO_DATE) ?? []);
+  if (/[→←⇒]|->|=>|```|held and blocked/i.test(cleaned)) return false;
+
+  const allowed = new Set(sheet.match(ISO_DATE) ?? []);
   const used = cleaned.match(ISO_DATE) ?? [];
   if (used.some((date) => !allowed.has(date))) return false;
+  const finish = sheet.match(/finishes (\d{4}-\d{2}-\d{2})/);
+  if (finish && !cleaned.includes(finish[1])) return false;
+
+  const factHeld = phraseAfter(sheet, "held by");
+  const rewriteHeld = phraseAfter(cleaned, "held by");
+  if (factHeld && rewriteHeld !== factHeld) return false;
+
+  const factBlocked = new Set(nameList(phraseAfter(sheet, "blocked by")));
+  const rewriteBlocked = nameList(phraseAfter(cleaned, "blocked by"));
+  if (factBlocked.size > 0 && rewriteBlocked.length === 0) return false;
+  if (rewriteBlocked.some((name) => !factBlocked.has(name))) return false;
+  if (factBlocked.size === 0 && rewriteBlocked.length > 0) return false;
+
   const sentences = cleaned.split(/[.!?]+/).map((part) => part.trim()).filter(Boolean);
   return sentences.length > 0 && sentences.length <= 3;
 }

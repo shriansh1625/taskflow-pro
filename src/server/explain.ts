@@ -1,4 +1,4 @@
-import { acceptRewrite, explainCriticalPath, explainTask } from "@/engine/explain";
+import { acceptRewrite, explainCriticalPath, explainTask, normalizeForCheck } from "@/engine/explain";
 import type { DerivedTask } from "@/engine";
 import { publicModelError } from "./suggest";
 
@@ -39,7 +39,7 @@ async function rewriteFacts(facts: string): Promise<string> {
           {
             role: "system",
             content:
-              "Rewrite the fact sheet in at most three short sentences. Use only facts in the sheet. Do not join tasks with arrows. Do not invent a dependency chain. No markdown.",
+              "Rewrite the fact sheet as exactly three sentences. Sentence 1 states the finish as YYYY-MM-DD and that the date was derived. Sentence 2 states only who it is held by, copied from the sheet, and does not use the word Blocked. Sentence 3 states Ready, or Blocked by the same names as the sheet, and does not use the word held. Do not write \"held and blocked\". Do not join tasks with arrows. Do not add a date. No markdown.",
           },
           { role: "user", content: facts },
         ],
@@ -61,11 +61,19 @@ async function rewriteFacts(facts: string): Promise<string> {
 export async function explainBoard(tasks: DerivedTask[], taskId?: string): Promise<Explanation> {
   const facts = factSheet(tasks, taskId);
   try {
-    const text = await rewriteFacts(facts);
+    const text = normalizeForCheck(await rewriteFacts(facts));
     if (!acceptRewrite(facts, text)) {
-      return { source: "engine", text: facts, note: "Model rewrite discarded." };
+      return {
+        source: "engine",
+        text: facts,
+        note: "Model rewrite discarded. A date, the held-by task, or the blocked-by list did not match the engine.",
+      };
     }
-    return { source: "model", text, note: null };
+    return {
+      source: "model",
+      text,
+      note: "Checked. Every date is in the engine facts. Held-by and blocked-by were not merged.",
+    };
   } catch (error) {
     return { source: "engine", text: facts, note: publicModelError(error) };
   }
