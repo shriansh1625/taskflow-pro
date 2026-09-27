@@ -34,8 +34,7 @@ Live check of the same three judge cases, on a separate browser cookie: Schema +
 
 | Input | Result | Test |
 | --- | --- | --- |
-| Empty body | 400 `INVALID` | `tests/http.test.ts` |
-| Body `{` | 400, not 500 | `tests/http.test.ts` |
+| Empty body, or a body that is not JSON | 400 `INVALID`, not 500 | `tests/http.test.ts` |
 | BoardError from a route | That status and path, as JSON | `tests/http.test.ts` |
 
 ## Model
@@ -48,7 +47,7 @@ Live check of the same three judge cases, on a separate browser cookie: Schema +
 | Fenced JSON with surrounding text | Parsed, extra text ignored | `tests/suggest.test.ts` |
 | Rewrite with an arrow | Discarded. Engine fact sheet is shown | `tests/explain.test.ts` |
 | Rewrite with a date not in the fact sheet | Discarded | `tests/explain.test.ts` |
-| Same bad date written with a unicode hyphen | Folded to `YYYY-MM-DD`, then discarded | `tests/explain.test.ts` |
+| A finish date that is not in the sheet, written with a unicode hyphen | Folded to `YYYY-MM-DD`, then discarded | `tests/explain.test.ts` |
 | "Held and blocked by…", or the wrong held-by name | Discarded | `tests/explain.test.ts` |
 | Missing key, timeout, or unusable JSON | Labeled heuristic for suggestions, or the fact sheet for Why finish | `src/server/suggest.ts`, `src/server/explain.ts` |
 

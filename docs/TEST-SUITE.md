@@ -9,7 +9,7 @@ npm run typecheck
 
 Last local run: 6 files, 52 tests, all passed. GitHub Actions on `main` runs the same two commands on Ubuntu with Node 22: https://github.com/shriansh1625/taskflow-pro/actions/workflows/test.yml
 
-The suite uses SQLite (`file:.test-board.db`). It does not call Groq and it does not click the live site.
+The suite uses a temporary SQLite file created for the test run. It does not call Groq and it does not click the live site.
 
 ## `tests/engine.test.ts` (21)
 
