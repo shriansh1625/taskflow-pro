@@ -351,8 +351,16 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
           {" "}
           Stored dates are never rewritten when a slip moves a finish.
         </p>
+        <ul className="achieved">
+          <li><strong>Cycle</strong> path named, nothing written</li>
+          <li><strong>Diamond</strong> one change, one move</li>
+          <li><strong>Rollback</strong> column stays, card turns Blocked</li>
+          <li><strong>Plan</strong> stored dates stay stored</li>
+          <li><strong>Model</strong> cannot write a date or an edge</li>
+        </ul>
         <p className="scope">
-          This browser has its own board. Reset cannot change another visitor&apos;s schedule. Write limits are stored in the database and follow this board onto a new server.
+          This browser has its own board. Reset cannot change another visitor&apos;s schedule. Write limits are stored in the database and follow this board onto a new server.{" "}
+          <a href="https://github.com/shriansh1625/taskflow-pro#what-this-achieves">What this achieves</a>
         </p>
         {showCritical && criticalChain.length > 0 ? (
           <p className="cp-rail">

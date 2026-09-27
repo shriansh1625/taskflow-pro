@@ -17,9 +17,34 @@ API client
 Release checklist
 ```
 
-The diamond is schema → API and schema → migration, both into integration tests. Extending schema by 3 days moves integration tests by 3, not 6. The board states how many days the derived finish sits past the stored plan, how many tasks are held by a predecessor, and how many have zero slack. Those numbers are derived. A slip does not rewrite the stored planned start.
+The seed is nine tasks. The diamond is schema → API and schema → migration, both into integration tests.
 
-Each browser gets its own board. Reset stays in that browser. Write limits are rows in the database, so a new server keeps the same count.
+## What this achieves
+
+These are the behaviors on the [live board](https://taskflow-pro-mauve-one.vercel.app/). Each one has a button or a line on that page, and a test in this repo.
+
+| Check | What you will see |
+| --- | --- |
+| Cycle detection | Open Integration tests and add Database schema as a prerequisite. The path is named. The edge is not saved. |
+| Diamond | **Schema +3d** moves Integration tests by 3 days, not 6. Clicking it again does not add another 3. |
+| Rollback | **Regress schema** takes Database schema out of Done. Backend API stays in In progress and turns Blocked. Columns are not dragged backward. |
+| Stored dates | Only planned start and duration are stored. A slip does not rewrite them, so the next change cannot compound on a saved delay. |
+| Cost of the order | On the seed, dependencies push the finish 6 days past the latest stored plan (7 Sept to 13 Sept). That gap is counted once. |
+| Critical path | Tasks with zero slack are chips in the header. They are a set. They are not drawn as one dependency chain. |
+| Suggestions | **Suggest** ranks proposals by days the engine would move, then by whether the edge would bind. **Accept** uses the same cycle check as a manual add. **Dismiss** writes nothing. |
+| Finish explanation | **Why finish** may show a Groq rewrite of engine facts. A rewrite that invents a date or joins tasks with an arrow is thrown away, and the fact sheet is shown instead. |
+| Separate boards | Each browser gets its own rows. **Reset** cannot change another visitor's schedule. The board id is an httpOnly cookie. |
+| Limits that survive a new server | Writes, resets, suggestions, and explanations are counted in Postgres, per board. `GET /api/health` reports `rateLimits: "database"` and `isolation: "per-browser"`. |
+| Tests | `npm test` covers the rows above. GitHub Actions runs the tests and `npm run typecheck` on `main`. |
+
+Where to read the implementation:
+
+- Schedule, cycles, slack, and the impact numbers: `src/engine`
+- Save, seed, and per-browser rows: `src/server/board-store.ts`
+- Cookie and the board id handed to every route: `src/middleware.ts`
+- Proofs: `tests/engine.test.ts`, `tests/board-store.test.ts`, `tests/explain.test.ts`, `tests/architecture.test.ts`
+- Layer rules and the database split: `docs/ARCHITECTURE.md`
+- The AI-Tool declaration for the portal: `docs/AI-TOOL.md`
 
 ## Judge walkthrough (2 minutes)
 
@@ -56,7 +81,7 @@ Optional: set `GROQ_API_KEY` in `.env` for live suggestions via Groq `openai/gpt
 
 ## Live URL (Vercel + Neon, $0)
 
-Local clone, `npm test`, and Docker stay on SQLite. The engine does not change. Vercel cannot keep a SQLite file, so production uses Neon Postgres with the same tables (`prisma/schema.postgres.prisma`). An empty database seeds itself on first read.
+Local clone, `npm test`, and Docker stay on SQLite. The engine does not change. Vercel cannot keep a SQLite file, so production uses Neon Postgres with the same tables (`prisma/schema.postgres.prisma`). The first visit from a browser creates that browser's nine-task board. Do not put `file:./dev.db` on Vercel.
 
 1. Create a Neon project at [https://console.neon.tech](https://console.neon.tech) (Free, no card). Region close to `iad` or `sin`.
 2. Connect → copy the **direct** URI (hostname must **not** contain `-pooler`). It should look like `postgresql://...?sslmode=require`.
@@ -65,18 +90,17 @@ Local clone, `npm test`, and Docker stay on SQLite. The engine does not change. 
    - `DATABASE_URL` = that direct Neon URI
    - `GROQ_API_KEY` = your Groq key
    - `GROQ_MODEL` = `openai/gpt-oss-120b`
-5. Deploy. First request creates tables and the 9-task diamond. Do not put `file:./dev.db` on Vercel.
+5. Deploy. The build creates the tables. The first browser to open the URL gets the 9-task diamond.
 6. Open the `*.vercel.app` URL and run the walkthrough above. First click after Neon has slept can take a few seconds.
 
 If Suggest says `heuristic`, `GROQ_API_KEY` is missing on Vercel. If the page errors about the database, the URI is pooled or not set.
 
-## What this does not do
+## Limits
 
-Do not point Vercel at `file:./dev.db`. That SQLite file does not exist on serverless. The live path is Neon Postgres, documented above. Local clone and Docker still use SQLite.
-
-This sprint gives each browser its own board and one editor for that board. There is no shared login. The cookie that identifies the board is httpOnly, so page scripts cannot read it, and a reset in one browser cannot see another browser's rows.
-
-The scheduling math does not depend on which database Prisma talks to. `src/engine` is pure TypeScript.
+- There is no shared login. The httpOnly cookie is the editor for that browser's board. Two people do not edit one schedule at the same time.
+- Working-day calendars and lag on an edge are out of scope. Duration is a whole UTC day.
+- Critical path is the zero-slack set, not a Gantt chart.
+- Live multi-region deploy is out of scope. Local clone and Docker use SQLite. The live site uses Neon. The scheduling math does not depend on which database Prisma talks to. `src/engine` is pure TypeScript.
 
 ## API
 
@@ -102,12 +126,6 @@ Each successful write returns the full derived board. Malformed JSON is `400`, n
 - Duration is a positive whole number of calendar days. There is no working-day calendar.
 - Planned start and duration are the only stored dates. Effective dates are computed on read.
 - Dates are UTC calendar dates.
-
-## Limitations
-
-- Working-day calendars, lags on individual edges, and live multi-user editing of the same board are out of scope. Separate browsers do not share a board.
-- Critical path is a zero-slack highlight, not a separate Gantt.
-- Live multi-region deploy is out of scope; SQLite is the local store.
 
 ## Docs
 

@@ -140,6 +140,23 @@ button.text-btn { border: 0; background: none; padding: 0; text-decoration: unde
   color: var(--ink);
 }
 
+.scope a { color: inherit; }
+
+.achieved {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.achieved strong {
+  font-weight: 600;
+}
+
 .cp-rail {
   display: flex;
   flex-wrap: wrap;

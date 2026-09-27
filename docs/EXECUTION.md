@@ -12,6 +12,18 @@ Build window: 25 Sep 2026 08:00 to 28 Sep 2026 08:00. Code for this product is w
 - The model cannot insert an edge. Accept goes through the normal dependency write.
 - Do not commit `node_modules`, `.env`, `.next`, database files, or secrets.
 
+## Shown on the live board
+
+[https://taskflow-pro-mauve-one.vercel.app/](https://taskflow-pro-mauve-one.vercel.app/) states the same rules in the header and runs them with the buttons:
+
+- **Schema +3d** is the diamond. Integration tests move by 3 days, not 6, and a second click does not add another 3.
+- **Regress schema** is the rollback. Backend API stays In progress and turns Blocked.
+- Adding Database schema under Integration tests is the cycle. The path is named and nothing is saved.
+- The line under the header is the cost of the order: on the seed, 6 days past the latest stored plan.
+- **Suggest** and **Why finish** cannot write a date or an edge. A bad rewrite is discarded.
+- **Reset** replaces only this browser's rows.
+- `GET /api/health` returns `isolation: "per-browser"` and `rateLimits: "database"`.
+
 ## Acceptance tests
 
 These live in `tests/engine.test.ts` and `tests/board-store.test.ts` and must stay green:

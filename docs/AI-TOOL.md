@@ -1,5 +1,7 @@
 # AI-Tool Declaration
 
+Point the portal's AI-Tool field at this file. The model is used in two places, and in both places the engine stays in charge of dates, columns, and edges.
+
 ## In the product
 
 - Feature: dependency suggestion, plus a one-paragraph explanation of a derived finish. The model does not set dates, columns, or readiness.

@@ -2,6 +2,18 @@
 
 The board is four columns: Backlog, In Progress, Review, Done. Correctness lives in `src/engine` and does not import the database, HTTP, or React.
 
+What that split is there to protect:
+
+| Guarantee | Where it is enforced |
+| --- | --- |
+| A cycle is named and not written | `src/engine/cycle.ts`, then the same check inside the dependency transaction in `src/server/board-store.ts` |
+| A diamond moves the join once | `src/engine/schedule.ts` keeps the latest predecessor finish only |
+| A rollback does not drag columns backward | A predecessor counts only when it is Done and Ready |
+| Derived dates are never stored | The task row keeps planned start and duration. Export and the model catalog use `storedTasks` for anything the model sees |
+| One browser cannot reset another | `src/middleware.ts` sets an httpOnly cookie. Rows are stored under that board id |
+| A new server does not forget the write limit | `RateBucket` in the database, read by every instance |
+| The UI cannot import the database | `tests/architecture.test.ts` fails the build if the layer arrows below are broken |
+
 ```
 UI (Kanban, drawer, suggest, export)     src/components
         |  fetch only. No Prisma.
