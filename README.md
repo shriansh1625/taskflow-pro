@@ -129,6 +129,9 @@ Each successful write returns the full derived board. Malformed JSON is `400`, n
 
 ## Docs
 
+- `docs/DESIGN.md` — architecture, data model, and known limits (the combined design note)
+- `docs/TEST-SUITE.md` — the 52 tests `npm test` runs
+- `docs/FAILURE-CASES.md` — inputs the system is supposed to refuse
 - `docs/ARCHITECTURE.md`
 - `docs/EXECUTION.md`
 - `docs/AI-TOOL.md`
