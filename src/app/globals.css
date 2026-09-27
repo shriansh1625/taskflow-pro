@@ -15,7 +15,7 @@
 
 html, body {
   margin: 0;
-  height: 100%;
+  min-height: 100%;
   color: var(--ink);
   font-family: var(--font-sans), "Segoe UI", sans-serif;
   font-size: 15px;
@@ -47,11 +47,9 @@ button.ghost:active {
 }
 
 .shell {
-  height: 100%;
-  min-height: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .topbar {
@@ -135,29 +133,27 @@ button.text-btn { border: 0; background: none; padding: 0; text-decoration: unde
 
 .legend { color: var(--muted); }
 
-.scope {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--ink);
-}
-
-.scope a { color: inherit; }
-
-.achieved {
+.rule-rail {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 14px;
+  align-items: center;
+  gap: 6px;
   margin: 0;
-  padding: 0;
-  list-style: none;
   font-size: 12px;
   line-height: 1.4;
 }
 
-.achieved strong {
+.rule-rail > span:first-child {
   font-weight: 600;
 }
+
+.rule-rail > span:not(:first-child) {
+  border: 1px solid var(--line);
+  background: var(--paper);
+  padding: 2px 6px;
+}
+
+.rule-rail a { color: inherit; }
 
 .cp-rail {
   display: flex;
@@ -194,10 +190,8 @@ button.text-btn { border: 0; background: none; padding: 0; text-decoration: unde
 
 .board {
   display: flex;
-  flex: 1;
-  min-height: 0;
   overflow-x: auto;
-  overflow-y: hidden;
+  align-items: stretch;
 }
 
 .column {
@@ -206,8 +200,7 @@ button.text-btn { border: 0; background: none; padding: 0; text-decoration: unde
   background: var(--lane);
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  min-height: 100%;
   transition: background 180ms var(--ease);
 }
 
@@ -259,9 +252,7 @@ button.text-btn { border: 0; background: none; padding: 0; text-decoration: unde
   flex-direction: column;
   gap: 9px;
   padding: 10px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  min-height: 160px;
 }
 
 .column-empty {

@@ -345,21 +345,16 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
                   : ""
               }. Counted once.`}
           {" "}
-          {impact.held} tasks are held by a predecessor. {impact.ownStart} still use their own planned start.
-          {" "}
-          {impact.blocked} blocked. {impact.zeroSlack} have zero slack.
-          {" "}
-          Stored dates are never rewritten when a slip moves a finish.
+          Stored dates are never rewritten.
         </p>
-        <ul className="achieved">
-          <li><strong>Cycle</strong> path named, nothing written</li>
-          <li><strong>Diamond</strong> one change, one move</li>
-          <li><strong>Rollback</strong> column stays, card turns Blocked</li>
-          <li><strong>Plan</strong> stored dates stay stored</li>
-          <li><strong>Model</strong> cannot write a date or an edge</li>
-        </ul>
-        <p className="scope">
-          This browser has its own board. Reset cannot change another visitor&apos;s schedule. Write limits are stored in the database and follow this board onto a new server.{" "}
+        <p className="rule-rail">
+          <span>Rules</span>
+          <span>Cycle: path named, nothing written</span>
+          <span>Diamond: one change, one move</span>
+          <span>Rollback: column stays, card turns Blocked</span>
+          <span>Plan: stored dates stay stored</span>
+          <span>Model: cannot write a date or an edge</span>
+          <span>Reset stays in this browser</span>
           <a href="https://github.com/shriansh1625/taskflow-pro#what-this-achieves">What this achieves</a>
         </p>
         {showCritical && criticalChain.length > 0 ? (
