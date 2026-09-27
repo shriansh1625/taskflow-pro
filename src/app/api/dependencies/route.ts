@@ -1,30 +1,22 @@
 import { addDependency, removeDependency } from "@/server/board-store";
-import { jsonBoard, jsonError, jsonFail, readJson } from "@/server/http";
+import { jsonBoard, jsonFail, readJson, runRoute } from "@/server/http";
 
-export async function POST(request: Request) {
-  try {
+export function POST(request: Request) {
+  return runRoute(async () => {
     const body = (await readJson(request)) as { predecessorId?: unknown; successorId?: unknown };
     if (!body?.predecessorId || !body?.successorId) {
       return jsonFail("predecessorId and successorId are required.");
     }
-    return jsonBoard(
-      await addDependency(String(body.predecessorId), String(body.successorId)),
-    );
-  } catch (error) {
-    return jsonError(error);
-  }
+    return jsonBoard(await addDependency(String(body.predecessorId), String(body.successorId)));
+  });
 }
 
-export async function DELETE(request: Request) {
-  try {
+export function DELETE(request: Request) {
+  return runRoute(async () => {
     const body = (await readJson(request)) as { predecessorId?: unknown; successorId?: unknown };
     if (!body?.predecessorId || !body?.successorId) {
       return jsonFail("predecessorId and successorId are required.");
     }
-    return jsonBoard(
-      await removeDependency(String(body.predecessorId), String(body.successorId)),
-    );
-  } catch (error) {
-    return jsonError(error);
-  }
+    return jsonBoard(await removeDependency(String(body.predecessorId), String(body.successorId)));
+  });
 }

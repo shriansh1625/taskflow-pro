@@ -1,9 +1,9 @@
 import { COLUMNS, type Column } from "@/engine";
 import { createTask } from "@/server/board-store";
-import { jsonBoard, jsonError, jsonFail, readJson } from "@/server/http";
+import { jsonBoard, jsonFail, readJson, runRoute } from "@/server/http";
 
-export async function POST(request: Request) {
-  try {
+export function POST(request: Request) {
+  return runRoute(async () => {
     const body = (await readJson(request)) as {
       title?: unknown;
       plannedStart?: unknown;
@@ -29,7 +29,5 @@ export async function POST(request: Request) {
         durationDays: Number(body.durationDays),
       }),
     );
-  } catch (error) {
-    return jsonError(error);
-  }
+  });
 }

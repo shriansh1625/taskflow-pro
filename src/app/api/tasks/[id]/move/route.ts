@@ -1,11 +1,11 @@
 import { COLUMNS, type Column } from "@/engine";
 import { moveTask } from "@/server/board-store";
-import { jsonBoard, jsonError, jsonFail, readJson } from "@/server/http";
+import { jsonBoard, jsonFail, readJson, runRoute } from "@/server/http";
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function POST(request: Request, { params }: Params) {
-  try {
+export function POST(request: Request, { params }: Params) {
+  return runRoute(async () => {
     const { id } = await params;
     const body = (await readJson(request)) as { column?: unknown; sortOrder?: unknown };
     if (!body?.column || !COLUMNS.includes(body.column as Column)) {
@@ -15,7 +15,5 @@ export async function POST(request: Request, { params }: Params) {
       return jsonFail("sortOrder must be a number.");
     }
     return jsonBoard(await moveTask(id, body.column as Column, body.sortOrder));
-  } catch (error) {
-    return jsonError(error);
-  }
+  });
 }

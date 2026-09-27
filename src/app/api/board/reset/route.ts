@@ -1,14 +1,12 @@
 import { resetBoard } from "@/server/board-store";
-import { jsonBoard, jsonError, jsonFail } from "@/server/http";
+import { jsonBoard, jsonFail, runRoute } from "@/server/http";
 import { rateLimit } from "@/server/limit";
 
-export async function POST() {
-  try {
+export function POST() {
+  return runRoute(async () => {
     if (!rateLimit("reset", 4)) {
       return jsonFail("Too many resets. Try again in a minute.", 429, "RATE_LIMIT");
     }
     return jsonBoard(await resetBoard());
-  } catch (error) {
-    return jsonError(error);
-  }
+  });
 }

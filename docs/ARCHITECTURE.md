@@ -3,18 +3,25 @@
 The board is four columns: Backlog, In Progress, Review, Done. Correctness lives in `src/engine` and does not import the database, HTTP, or React.
 
 ```
-UI (Kanban, drawer, suggest, export)
-        |
+UI (Kanban, drawer, suggest, export)     src/components
+        |  fetch only. No Prisma.
         v
-Next.js route handlers
-        |
+Route handlers                           src/app/api
+        |  runRoute: one JSON error policy
         v
-board-store  --transaction-->  SQLite (local, tests, Docker)
-                            or Postgres (Vercel + Neon)
-        |
+board-store                              src/server
+        |  transaction around cycle check + insert
         v
-engine.recompute / evaluateNewEdge / previewDependency
+engine                                   src/engine
+        recompute, cycles, preview, explanations
 ```
+
+`tests/architecture.test.ts` fails the build if those arrows are violated.
+
+- `src/engine` cannot import Prisma, React, Next, or the filesystem.
+- `src/components` cannot import `src/server` or Prisma. The browser talks to route handlers.
+- `src/server` cannot import React components.
+- `src/app/page.tsx` is the only UI entry that reads the store, and it runs on the server.
 
 ## Stored versus derived
 
@@ -51,7 +58,9 @@ If the key is missing or Groq fails, a labeled heuristic uses the same filter. P
 
 ## Persistence
 
-Prisma over SQLite for clone, tests, and Docker. Production on Vercel uses the same models on Neon Postgres (`prisma/schema.postgres.prisma`). The engine does not know about Prisma. Cycle, diamond, and rollback math do not change with the provider. An empty store seeds the nine-task diamond on first read.
+`prisma/schema.prisma` is the only model definition. `prisma/schema.postgres.prisma` is that file with the provider set to PostgreSQL and a Vercel binary target. `postgresSchemaFromSqlite` produces it, and the architecture test rejects a hand-edited drift. Local clone, tests, and Docker use SQLite. Vercel generates the Postgres client and talks to Neon. The engine does not know which one is connected. An empty store seeds the nine-task diamond on first read.
+
+Suggestions receive `storedTasks`, which strips effective dates before the catalog is built. Explanations may read derived fields. Neither path writes them back.
 
 CI on `main` runs `npm test` and `npm run typecheck` against SQLite.
 

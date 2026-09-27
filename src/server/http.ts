@@ -21,6 +21,15 @@ export async function readJson(request: Request): Promise<unknown> {
   }
 }
 
+/** One error policy for every route. Handlers return a Response or throw BoardError. */
+export async function runRoute(work: () => Promise<Response>): Promise<Response> {
+  try {
+    return await work();
+  } catch (error) {
+    return jsonError(error);
+  }
+}
+
 export function jsonError(error: unknown) {
   if (error instanceof BoardError) {
     return NextResponse.json(
