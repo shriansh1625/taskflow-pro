@@ -17,7 +17,9 @@ API client
 Release checklist
 ```
 
-The diamond is schema → API and schema → migration, both into integration tests. Extending schema by 3 days moves integration tests by 3, not 6.
+The diamond is schema → API and schema → migration, both into integration tests. Extending schema by 3 days moves integration tests by 3, not 6. The board counts how many tasks are held by a predecessor, how many are blocked, and how many have zero slack. Those numbers are derived. A slip does not rewrite the stored planned start.
+
+Writes are rate-limited. Reset asks before it replaces the shared board. Why finish shows engine facts, or a model rewrite that was checked for invented dates and arrows.
 
 ## Judge walkthrough (2 minutes)
 

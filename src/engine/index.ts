@@ -1,4 +1,4 @@
-export { explainCriticalPath, explainTask } from "./explain";
+export { acceptRewrite, deliveryImpact, explainCriticalPath, explainTask } from "./explain";
 export { evaluateNewEdge, pathFrom } from "./cycle";
 export { addDays, diffDays, isIsoDate } from "./dates";
 export { moveDecision, previewDependency } from "./preview";

@@ -13,3 +13,7 @@ export function rateLimit(bucket: string, maxPerMinute = 8): boolean {
   hits.set(bucket, recent);
   return true;
 }
+
+export function allowWrite(): boolean {
+  return rateLimit("mutate", 40);
+}

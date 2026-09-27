@@ -41,3 +41,37 @@ export function explainCriticalPath(tasks: DerivedTask[]): string {
   );
   return `Zero slack (${chain.length}): ${chain.map((task) => task.title).join(", ")}. Latest of those finishes is ${finish}. Zero slack is not one dependency chain.`;
 }
+
+const ISO_DATE = /\d{4}-\d{2}-\d{2}/g;
+
+/** A rewrite may only restate the fact sheet. Arrows and new dates are rejected. */
+export function acceptRewrite(facts: string, text: string): boolean {
+  const cleaned = text.trim();
+  if (cleaned.length < 40 || cleaned.length > 480) return false;
+  if (/→|->|=>|```/.test(cleaned)) return false;
+  const allowed = new Set(facts.match(ISO_DATE) ?? []);
+  const used = cleaned.match(ISO_DATE) ?? [];
+  if (used.some((date) => !allowed.has(date))) return false;
+  const sentences = cleaned.split(/[.!?]+/).map((part) => part.trim()).filter(Boolean);
+  return sentences.length > 0 && sentences.length <= 3;
+}
+
+export function deliveryImpact(tasks: DerivedTask[]): {
+  blocked: number;
+  held: number;
+  ownStart: number;
+  zeroSlack: number;
+  projectFinish: string | null;
+} {
+  const projectFinish = tasks.reduce<string | null>(
+    (latest, task) => (latest === null || task.effectiveFinish > latest ? task.effectiveFinish : latest),
+    null,
+  );
+  return {
+    blocked: tasks.filter((task) => task.readiness === "BLOCKED").length,
+    held: tasks.filter((task) => task.bindingPredecessorId !== null).length,
+    ownStart: tasks.filter((task) => task.bindingPredecessorId === null).length,
+    zeroSlack: tasks.filter((task) => task.onCriticalPath).length,
+    projectFinish,
+  };
+}

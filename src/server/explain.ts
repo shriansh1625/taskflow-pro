@@ -1,4 +1,4 @@
-import { explainCriticalPath, explainTask } from "@/engine/explain";
+import { acceptRewrite, explainCriticalPath, explainTask } from "@/engine/explain";
 import type { DerivedTask } from "@/engine";
 import { publicModelError } from "./suggest";
 
@@ -62,6 +62,9 @@ export async function explainBoard(tasks: DerivedTask[], taskId?: string): Promi
   const facts = factSheet(tasks, taskId);
   try {
     const text = await rewriteFacts(facts);
+    if (!acceptRewrite(facts, text)) {
+      return { source: "engine", text: facts, note: "Model rewrite discarded." };
+    }
     return { source: "model", text, note: null };
   } catch (error) {
     return { source: "engine", text: facts, note: publicModelError(error) };

@@ -1,10 +1,12 @@
 import { deleteTask, updateTask } from "@/server/board-store";
-import { jsonBoard, readJson, runRoute } from "@/server/http";
+import { jsonBoard, jsonFail, readJson, runRoute } from "@/server/http";
+import { allowWrite } from "@/server/limit";
 
 type Params = { params: Promise<{ id: string }> };
 
 export function PATCH(request: Request, { params }: Params) {
   return runRoute(async () => {
+    if (!allowWrite()) return jsonFail("Too many writes. Try again in a minute.", 429, "RATE_LIMIT");
     const { id } = await params;
     const body = (await readJson(request)) as {
       title?: unknown;
@@ -25,6 +27,7 @@ export function PATCH(request: Request, { params }: Params) {
 
 export function DELETE(_request: Request, { params }: Params) {
   return runRoute(async () => {
+    if (!allowWrite()) return jsonFail("Too many writes. Try again in a minute.", 429, "RATE_LIMIT");
     const { id } = await params;
     return jsonBoard(await deleteTask(id));
   });

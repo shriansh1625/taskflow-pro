@@ -15,7 +15,7 @@ import {
   type DropAnimation,
 } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { COLUMNS, diffDays, moveDecision, type BoardPayload, type Column, type DerivedTask } from "@/engine";
+import { COLUMNS, deliveryImpact, diffDays, moveDecision, type BoardPayload, type Column, type DerivedTask } from "@/engine";
 import { moveTaskRequest, patchTask, requestExplanation, resetBoardRequest, type ApiError, type Explanation } from "@/lib/api";
 import { COLUMN_COPY, formatDate } from "@/lib/copy";
 import { SEED_TASKS } from "@/seed/board";
@@ -119,6 +119,7 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
     (latest, task) => (task.effectiveFinish > latest ? task.effectiveFinish : latest),
     "",
   );
+  const impact = useMemo(() => deliveryImpact(board.tasks), [board.tasks]);
   const criticalChain = useMemo(
     () =>
       board.tasks
@@ -333,7 +334,11 @@ export function BoardApp({ initialBoard }: { initialBoard: BoardPayload }) {
 
       <div className="rail">
         <p className="legend">
-          Stored: planned start and duration. Derived on every read: finish, blocked, slack, critical path.
+          {impact.held} tasks are held by a predecessor. {impact.ownStart} still use their own planned start.
+          {" "}
+          {impact.blocked} blocked. {impact.zeroSlack} have zero slack.
+          {" "}
+          Stored dates are never rewritten when a slip moves a finish.
         </p>
         {showCritical && criticalChain.length > 0 ? (
           <p className="cp-rail">

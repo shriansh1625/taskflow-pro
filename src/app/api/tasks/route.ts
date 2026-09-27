@@ -1,9 +1,11 @@
 import { COLUMNS, type Column } from "@/engine";
 import { createTask } from "@/server/board-store";
 import { jsonBoard, jsonFail, readJson, runRoute } from "@/server/http";
+import { allowWrite } from "@/server/limit";
 
 export function POST(request: Request) {
   return runRoute(async () => {
+    if (!allowWrite()) return jsonFail("Too many writes. Try again in a minute.", 429, "RATE_LIMIT");
     const body = (await readJson(request)) as {
       title?: unknown;
       plannedStart?: unknown;
